@@ -460,19 +460,12 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM fully loaded - initializing app...");
     
     try {
-        // Initialize the data store
+
+        setInitialSidebarState();
         initializeDataStore();
-        
-        // Setup UI elements and event listeners
         setupUI();
-        
-        // Load and display initial data
         loadDashboardData();
-        
-        // Initialize tooltips
         initializeTooltips();
-        
-        // Initialize dark mode
         initializeDarkMode();
         
         console.log("App initialization complete!");
@@ -480,6 +473,24 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error("Error during app initialization:", error);
     }
 });
+
+// Set correct initial sidebar state based on screen width
+function setInitialSidebarState() {
+    const sidebar = document.querySelector('#sidebar');
+    if (window.innerWidth >= 992) {
+        // On larger screens, show sidebar by default
+        sidebar.classList.remove('active');
+    } else {
+        // On smaller screens, hide sidebar by default
+        sidebar.classList.add('active');
+    }
+}
+
+// Call this function when page loads
+setInitialSidebarState();
+
+// Also update on window resize
+window.addEventListener('resize', setInitialSidebarState);
 
 // Data store keys for localStorage
 const ROOMS_STORAGE_KEY = 'meeting_rooms';
@@ -685,13 +696,16 @@ function initializeDataStore() {
 
 // Setup UI elements and event listeners
 function setupUI() {
+    
     // Sidebar toggle functionality
     document.querySelector('#sidebarCollapse').addEventListener('click', function() {
         document.querySelector('#sidebar').classList.toggle('active');
+        console.log("Sidebar toggle clicked - mobile");
     });
     
     document.querySelector('#sidebarCollapseBtn').addEventListener('click', function() {
         document.querySelector('#sidebar').classList.toggle('active');
+        console.log("Sidebar toggle clicked - header");
     });
     
     // Navigation menu event listeners
