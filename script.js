@@ -1,5 +1,12 @@
+// Add at the beginning of your script.js
+console.log("Bootstrap available:", typeof bootstrap !== 'undefined');
+console.log("FullCalendar available:", typeof FullCalendar !== 'undefined');
+console.log("Chart.js available:", typeof Chart !== 'undefined');
+
 // Load and display dashboard data
 function loadDashboardData() {
+    console.log("Loading dashboard data...");
+    
     // Update dashboard statistics
     updateDashboardStats();
     
@@ -446,22 +453,32 @@ function showBookingDetails(bookingId) {
         const modal = new bootstrap.Modal(document.getElementById('bookingDetailsModal'));
         modal.show();
     }
-}// Initialize the application when DOM is fully loaded
+}
+
+// Add or replace the DOMContentLoaded event listener
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize the data store
-    initializeDataStore();
+    console.log("DOM fully loaded - initializing app...");
     
-    // Setup UI elements and event listeners
-    setupUI();
-    
-    // Load and display initial data
-    loadDashboardData();
-    
-    // Initialize tooltips
-    initializeTooltips();
-    
-    // Initialize dark mode
-    initializeDarkMode();
+    try {
+        // Initialize the data store
+        initializeDataStore();
+        
+        // Setup UI elements and event listeners
+        setupUI();
+        
+        // Load and display initial data
+        loadDashboardData();
+        
+        // Initialize tooltips
+        initializeTooltips();
+        
+        // Initialize dark mode
+        initializeDarkMode();
+        
+        console.log("App initialization complete!");
+    } catch (error) {
+        console.error("Error during app initialization:", error);
+    }
 });
 
 // Data store keys for localStorage
@@ -469,6 +486,10 @@ const ROOMS_STORAGE_KEY = 'meeting_rooms';
 const BOOKINGS_STORAGE_KEY = 'room_bookings';
 const SETTINGS_STORAGE_KEY = 'system_settings';
 const USER_SETTINGS_KEY = 'user_settings';
+
+// Add this debugging code to verify data is properly initialized
+console.log("Rooms initialized:", JSON.parse(localStorage.getItem(ROOMS_STORAGE_KEY)));
+console.log("Bookings initialized:", JSON.parse(localStorage.getItem(BOOKINGS_STORAGE_KEY)));
 
 // Initialize the data store with sample data if empty
 function initializeDataStore() {
@@ -957,11 +978,25 @@ function loadDashboardData() {
 
 // Display rooms overview
 function displayRoomsOverview() {
+    console.log("Displaying room overview...");
     const roomsOverviewContainer = document.querySelector('#roomsOverview');
+
+    // Make sure the container exists
+    if (!roomsOverviewContainer) {
+        console.error("Room overview container not found!");
+        return;
+    }
+    
     roomsOverviewContainer.innerHTML = '';
     
     // Get rooms from localStorage
-    const rooms = JSON.parse(localStorage.getItem(ROOMS_STORAGE_KEY));
+    const rooms = JSON.parse(localStorage.getItem(ROOMS_STORAGE_KEY) || '[]');
+    console.log("Rooms loaded for display:", rooms);
+    
+    if (rooms.length === 0) {
+        roomsOverviewContainer.innerHTML = '<div class="col-12"><div class="alert alert-warning">No rooms found. Please add rooms in the Admin Panel.</div></div>';
+        return;
+    }
     
     // Get current bookings to determine room status
     const now = new Date();
@@ -1043,15 +1078,24 @@ function displayRoomsOverview() {
 
 // Display today's bookings
 function displayTodayBookings() {
+    console.log("Displaying today's bookings...");
     const todayBookingsContainer = document.querySelector('#todayBookings');
+    // Make sure the container exists
+    if (!todayBookingsContainer) {
+        console.error("Today's bookings container not found!");
+        return;
+    }
+    
     todayBookingsContainer.innerHTML = '';
     
     // Get today's date
     const todayStr = new Date().toISOString().split('T')[0];
     
     // Get bookings from localStorage
-    const bookings = JSON.parse(localStorage.getItem(BOOKINGS_STORAGE_KEY));
+    const bookings = JSON.parse(localStorage.getItem(BOOKINGS_STORAGE_KEY) || '[]');
     const todayBookings = bookings.filter(booking => booking.date === todayStr);
+
+    console.log("Today's bookings:", todayBookings);
     
     // Sort bookings by start time
     todayBookings.sort((a, b) => a.startTime.localeCompare(b.startTime));
@@ -2063,8 +2107,10 @@ function saveNotificationSettings() {
     saveUserSettings(); // Reuse the same function
 }
 
-// Show notification toast
+// Notification function fix
 function showNotification(title, message, type = 'info') {
+    console.log(`Showing notification: ${title} - ${message} (${type})`);
+    
     // Create toast element
     const toastEl = document.createElement('div');
     toastEl.className = `toast show fade-in`;
@@ -2072,29 +2118,10 @@ function showNotification(title, message, type = 'info') {
     toastEl.setAttribute('aria-live', 'assertive');
     toastEl.setAttribute('aria-atomic', 'true');
     
-    // Set type-specific styles
-    let bgClass = 'bg-primary';
-    let icon = 'info-circle';
-    
-    switch (type) {
-        case 'success':
-            bgClass = 'bg-success';
-            icon = 'check-circle';
-            break;
-        case 'danger':
-            bgClass = 'bg-danger';
-            icon = 'exclamation-circle';
-            break;
-        case 'warning':
-            bgClass = 'bg-warning';
-            icon = 'exclamation-triangle';
-            break;
-    }
-    
     // Set toast content
     toastEl.innerHTML = `
         <div class="toast-header">
-            <i class="fas fa-${icon} me-2"></i>
+            <i class="fas fa-info-circle me-2"></i>
             <strong class="me-auto">${title}</strong>
             <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
@@ -2114,17 +2141,19 @@ function showNotification(title, message, type = 'info') {
     // Add toast to container
     toastContainer.appendChild(toastEl);
     
-    // Create Bootstrap toast instance and show
-    const toast = new bootstrap.Toast(toastEl, {
-        autohide: true,
-        delay: 5000
-    });
-    toast.show();
-    
-    // Remove toast after it's hidden
-    toastEl.addEventListener('hidden.bs.toast', function() {
-        toastEl.remove();
-    });
+    // Optional: Use Bootstrap Toast if available, otherwise handle manually
+    if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+        const toast = new bootstrap.Toast(toastEl, {
+            autohide: true,
+            delay: 5000
+        });
+        toast.show();
+    } else {
+        // Manual fallback
+        setTimeout(() => {
+            toastEl.remove();
+        }, 5000);
+    }
 }
 
 // Save system settings
